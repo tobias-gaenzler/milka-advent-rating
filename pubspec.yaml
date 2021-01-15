@@ -1,0 +1,59 @@
+name: milka_advent_calendar_rating
+description: Rate a milka chocolate bar every day in advent
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_rating_bar: ^3.2.0+1
+  shared_preferences: ^0.5.12+4
+  http: ^0.12.2
+  provider: ^4.3.2+3
+
+  # The following adds the Cupertino Icons font to your application.
+  # Use with the CupertinoIcons class for iOS style icons.
+  cupertino_icons: ^1.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+
+  uses-material-design: true
+
+  assets:
+    - assets/json/chocolatebars.json
+    - assets/images/1.jpg
+    - assets/images/2.jpg
+    - assets/images/3.jpg
+    - assets/images/4.jpg
+    - assets/images/5.jpg
+    - assets/images/6.jpg
+    - assets/images/7.jpg
+    - assets/images/8.jpg
+    - assets/images/9.jpg
+    - assets/images/10.jpg
+    - assets/images/11.jpg
+    - assets/images/12.jpg
+    - assets/images/13.jpg
+    - assets/images/14.jpg
+    - assets/images/15.jpg
+    - assets/images/16.jpg
+    - assets/images/17.jpg
+    - assets/images/18.jpg
+    - assets/images/19.jpg
+    - assets/images/20.jpg
+    - assets/images/21.jpg
+    - assets/images/22.jpg
+    - assets/images/23.jpg
+    - assets/images/24.jpg
+
