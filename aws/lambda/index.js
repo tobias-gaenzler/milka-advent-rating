@@ -1,27 +1,24 @@
-// POST: {\"Rating\":{\"UserName\":\"Emil\",\"ChocolateBar\":1,\"Value\":2.5}}"
-// GET: userName=Emil&ChocolateBar=1
-
 const randomBytes = require('crypto').randomBytes;
 const AWS = require('aws-sdk');
 const ddb = new AWS.DynamoDB.DocumentClient();
 
 exports.handler = (event, context, callback) => {
     console.log('Received event: ', event);
-    if (event.rawPath.includes('/list')) {
+    if (event.routeKey == 'GET /list') {
         getRatingList().then((result) => {
             console.log("retrieved all ratings: " + result);
             returnResult(callback, JSON.stringify({ ratingList: result.Items, }));
         });
     }
-    else if (event.routeKey.includes('GET /milkarating')) {
+    else if (event.routeKey == 'GET /milkarating') {
         var userName = event["queryStringParameters"]["UserName"];
         var chocolateBar = event["queryStringParameters"]["ChocolateBar"];
         getRating(userName, chocolateBar).then((result) => {
             console.log("retrieve result from promise: " + result);
-            returnResult(callback, JSON.stringify({ Value: result, }))
+            returnResult(callback, JSON.stringify({ Value: result, }));
         });
     }
-    else if (event.routeKey.includes('POST')) {
+    else if (event.routeKey == 'POST /milkarating') {
         // POST: insert or update of existing rating
         var requestBody;
         if(typeof event.body == "object") {
@@ -31,7 +28,7 @@ exports.handler = (event, context, callback) => {
         }        
         const rating = requestBody.Rating;
         upsertRating(rating).then(() => {
-            returnResult(callback, JSON.stringify({ RatingId: rating.ratingid }))
+            returnResult(callback, JSON.stringify({ RatingId: rating.ratingid }));
         }).catch((err) => {
             console.error(err);
             errorResponse(err.message, context.awsRequestId, callback);
@@ -139,13 +136,13 @@ async function scanForExistingRating(userName, chocolateBar) {
 function getFilterMapForAvailableChocolateBars(today) {
     // Keys are used in FilterExpression: ChocolateBar IN (:chocolatebarvalue1,:chocolatebarvalue2,...)
     // Map is used in ExpressionAttributeValues: {':chocolatebarvalue1': '1',':chocolatebarvalue2': '2',...}
-    var count = 0
+    var count = 0;
     if (today < new Date(2020, 11, 2, 1, 1, 1)) {
         return '';
     } else if (today > new Date(2020, 11, 25, 1)) {
         count = 24;
     } else {
-        count = today.getUTCDate() - 1
+        count = today.getUTCDate() - 1;
     }
     var filterMap = {};
     for (var i = 1; i <= count; i++) {
