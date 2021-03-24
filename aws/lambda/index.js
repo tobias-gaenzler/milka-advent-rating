@@ -10,131 +10,53 @@ exports.handler = (event, context, callback) => {
     if (event.rawPath.includes('/list')) {
         getRatingList().then((result) => {
             console.log("retrieved all ratings: " + result);
-            callback(null, {
-                statusCode: 200,
-                body: JSON.stringify({
-                    ratingList: result.Items,
-                }),
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                },
-            });
+            returnResult(callback, JSON.stringify({ ratingList: result.Items, }));
         });
     }
     else if (event.routeKey.includes('GET /milkarating')) {
-        console.log(event.queryStringParameters);
-        if (event["queryStringParameters"] == null ||
-            event["queryStringParameters"]["UserName"] == null ||
-            event["queryStringParameters"]["ChocolateBar"] == null) {
-            console.error('Validation Failed');
-            errorResponse('Couldn\'t get rating because user name and/or chocolate bar have not been provided as query string parameters', context.awsRequestId, callback);
-        }
         var userName = event["queryStringParameters"]["UserName"];
         var chocolateBar = event["queryStringParameters"]["ChocolateBar"];
         getRating(userName, chocolateBar).then((result) => {
             console.log("retrieve result from promise: " + result);
-            callback(null, {
-                statusCode: 200,
-                body: JSON.stringify({
-                    Value: result,
-                }),
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                },
-            });
+            returnResult(callback, JSON.stringify({ Value: result, }))
         });
     }
     else if (event.routeKey.includes('POST')) {
         // POST: insert or update of existing rating
-        const requestBody = JSON.parse(event.body);
+        var requestBody;
+        if(typeof event.body == "object") {
+            requestBody = event.body;
+        } else {
+            requestBody = JSON.parse(event.body);
+        }        
         const rating = requestBody.Rating;
         upsertRating(rating).then(() => {
-            // You can use the callback function to provide a return value from your Node.js
-            // Lambda functions. The first parameter is used for failed invocations. The
-            // second parameter specifies the result data of the invocation.
-
-            // Because this Lambda function is called by an API Gateway proxy integration
-            // the result object must use the following structure.
-            callback(null, {
-                statusCode: 201,
-                body: JSON.stringify({
-                    RatingId: rating.ratingid,
-                    UserName: rating.UserName,
-                    ChocolateBar: rating.ChocolateBar,
-                    Value: rating.Value
-                }),
-                headers: {
-                    'Access-Control-Allow-Origin': '*',
-                },
-            });
+            returnResult(callback, JSON.stringify({ RatingId: rating.ratingid }))
         }).catch((err) => {
             console.error(err);
-
-            // If there is an error during processing, catch it and return
-            // from the Lambda function successfully. Specify a 500 HTTP status
-            // code and provide an error message in the body. This will provide a
-            // more meaningful error response to the end client.
             errorResponse(err.message, context.awsRequestId, callback);
         });
     }
 };
 
 async function getRatingList() {
-    var today = new Date();
-    var yesterday = today.getUTCDate() - 1;
-    var chocolateBarValues = [];
-    for (var i = 1; i <= yesterday; i++) {
-        chocolateBarValues.push(i.toString());
-    }
-    var chocolateBarObject = {};
-    var index = 0;
-    chocolateBarValues.forEach(function(value) {
-        index++;
-        var chocolateBarKey = ":chocolatebarvalue" + index;
-        chocolateBarObject[chocolateBarKey.toString()] = value;
-    });
-    console.log("values: ", chocolateBarValues);
-    console.log("objects:", chocolateBarObject);
-    console.log("keys:", Object.keys(chocolateBarObject).toString());
+    var chocolateBarObject = getFilterMapForAvailableChocolateBars(new Date());
     var params = {
         TableName: "milkarating",
         ProjectionExpression: "UserName, ChocolateBar, #ratingValue",
         FilterExpression: "ChocolateBar IN (" + Object.keys(chocolateBarObject).toString() + ")",
         ExpressionAttributeValues: chocolateBarObject,
-        ExpressionAttributeNames: {
-            "#ratingValue": "Value"
-        },
+        ExpressionAttributeNames: { "#ratingValue": "Value" },
     };
 
     return ddb
-        .scan(params, function(err, data) {
+        .scan(params, function (err, data) {
             console.log("Result of scanning for ratings:", JSON.stringify(data, null, 2));
             if (err) {
                 console.log('Error scanning for ratings:', err);
             }
         })
         .promise();
-}
-
-async function scanForExistingRating(userName, chocolateBar) {
-    var params = {
-        TableName: "milkarating",
-        ProjectionExpression: "ratingid, UserName, ChocolateBar, #ratingValue",
-        FilterExpression: "UserName = :username and ChocolateBar = :chocolateBar",
-        ExpressionAttributeNames: {
-            "#ratingValue": "Value"
-        },
-        ExpressionAttributeValues: {
-            ":username": userName,
-            ":chocolateBar": chocolateBar,
-        }
-    };
-    return ddb.scan(params, function(err, data) {
-        console.log("Result of scanning for existing rating:", JSON.stringify(data, null, 2));
-        if (err) {
-            console.log('Error scanning for existing ratings:', err);
-        }
-    }).promise();
 }
 
 async function getRating(userName, chocolateBar) {
@@ -146,15 +68,12 @@ async function getRating(userName, chocolateBar) {
             console.log("Found value" + scanResult.Items[0].Value);
             result = scanResult.Items[0].Value;
         }
-        else {
-            result = '0';
-        }
     }
     catch (err) {
         console.error("Unable to query. Error:", JSON.stringify(err, null, 2));
     }
     console.log("Returning value in promise: " + result);
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
         resolve(result);
     });
 }
@@ -184,7 +103,7 @@ async function upsertRating(rating) {
             Value: rating.Value,
             RequestTime: new Date().toISOString(),
         },
-    }, function(err, data) {
+    }, function (err, data) {
         if (err) {
             console.error("Unable to insert rating. Error JSON:", err);
         }
@@ -193,6 +112,56 @@ async function upsertRating(rating) {
         }
 
     }).promise();
+}
+
+async function scanForExistingRating(userName, chocolateBar) {
+    var params = {
+        TableName: "milkarating",
+        ProjectionExpression: "ratingid, UserName, ChocolateBar, #ratingValue",
+        FilterExpression: "UserName = :username and ChocolateBar = :chocolateBar",
+        ExpressionAttributeNames: {
+            "#ratingValue": "Value"
+        },
+        ExpressionAttributeValues: {
+            ":username": userName,
+            ":chocolateBar": chocolateBar,
+        }
+    };
+    return ddb.scan(params, function (err, data) {
+        console.log("Result of scanning for existing rating:", JSON.stringify(data, null, 2));
+        if (err) {
+            console.log('Error scanning for existing ratings:', err);
+        }
+    }).promise();
+}
+
+
+function getFilterMapForAvailableChocolateBars(today) {
+    // Keys are used in FilterExpression: ChocolateBar IN (:chocolatebarvalue1,:chocolatebarvalue2,...)
+    // Map is used in ExpressionAttributeValues: {':chocolatebarvalue1': '1',':chocolatebarvalue2': '2',...}
+    var count = 0
+    if (today < new Date(2020, 11, 2, 1, 1, 1)) {
+        return '';
+    } else if (today > new Date(2020, 11, 25, 1)) {
+        count = 24;
+    } else {
+        count = today.getUTCDate() - 1
+    }
+    var filterMap = {};
+    for (var i = 1; i <= count; i++) {
+        filterMap[`:chocolatebarvalue${i}`] = i.toString();
+    }
+    return filterMap;
+}
+
+function returnResult(callback, body) {
+    callback(null, {
+        statusCode: 200,
+        body: body,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+        },
+    });
 }
 
 function toUrlString(buffer) {
