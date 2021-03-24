@@ -1,0 +1,26 @@
+{
+    "version": "2.0",
+    "routeKey": "POST /milkarating",
+    "rawPath": "/milkarating",
+    "rawQueryString": "",
+    "headers": {
+      "content-length": "65",
+      "content-type": "application/json; charset=UTF-8"
+    },
+    "requestContext": {
+      "http": {
+        "method": "POST",
+        "path": "/milkarating",
+        "protocol": "HTTP/1.1"
+      },
+      "routeKey": "POST /milkarating"
+    },
+    "body": {
+      "Rating": {
+        "UserName": "Tobias",
+        "ChocolateBar": "21",
+        "Value": "6.0"
+      }
+    },
+    "isBase64Encoded": "false"
+  }

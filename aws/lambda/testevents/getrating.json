@@ -1,0 +1,23 @@
+{
+    "version": "2.0",
+    "routeKey": "GET /milkarating",
+    "rawPath": "/milkarating",
+    "rawQueryString": "UserName=Benjamin&ChocolateBar=8",
+    "headers": {
+      "accept-encoding": "gzip",
+      "content-length": "0"
+    },
+    "queryStringParameters": {
+      "ChocolateBar": "8",
+      "UserName": "Benjamin"
+    },
+    "requestContext": {
+      "http": {
+        "method": "GET",
+        "path": "/milkarating",
+        "protocol": "HTTP/1.1"
+      },
+      "routeKey": "GET /milkarating"
+    },
+    "isBase64Encoded": "false"
+  }

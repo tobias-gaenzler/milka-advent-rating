@@ -1,0 +1,19 @@
+{
+    "version": "2.0",
+    "routeKey": "GET /list",
+    "rawPath": "/list",
+    "rawQueryString": "",
+    "headers": {
+      "accept-encoding": "gzip",
+      "content-length": "0"
+    },
+    "requestContext": {
+      "http": {
+        "method": "GET",
+        "path": "/list",
+        "protocol": "HTTP/1.1"
+      },
+      "routeKey": "GET /list"
+    },
+    "isBase64Encoded": "false"
+  }
